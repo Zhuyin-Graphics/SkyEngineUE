@@ -1,5 +1,6 @@
 ﻿#include "ExportConfigWidget.h"
 #include "SkyEngineUEExport.h"
+#include "SkyEngineUE.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Layout/SUniformGridPanel.h"
 
@@ -68,6 +69,7 @@ namespace sky
 
 	FReply FExportConfigWidget::OnExportFullClicked() // NOLINT
 	{
+		FSkyEngineUEModule::ExportWorld(ConfigValue);
 		return FReply::Handled();
 	}
 

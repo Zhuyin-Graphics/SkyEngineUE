@@ -8,6 +8,8 @@
 
 #include "Widget/ExportConfigWidget.h"
 
+#include "Exporter/LevelExporter.h"
+
 #define LOCTEXT_NAMESPACE "FSkyEngineUEModule"
 
 void FSkyEngineUEModule::StartupModule()
@@ -66,6 +68,18 @@ void FSkyEngineUEModule::RegisterMenus() // NOLINT
 		FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FSkyEngineUECommands::Get().PluginAction));
 		Entry.SetCommandList(PluginCommands);
 	}
+}
+
+
+void FSkyEngineUEModule::ExportWorld(const FSkyEngineExportConfig& config)
+{
+	sky::LevelExport ExportTask;
+	ExportTask.Run(config);
+}
+
+void FSkyEngineUEModule::ExportHLOD()
+{
+
 }
 
 #undef LOCTEXT_NAMESPACE

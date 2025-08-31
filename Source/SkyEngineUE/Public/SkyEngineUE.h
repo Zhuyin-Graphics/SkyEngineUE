@@ -4,6 +4,8 @@
 
 #include "Modules/ModuleManager.h"
 
+struct FSkyEngineExportConfig;
+
 class FSkyEngineUEModule : public IModuleInterface
 {
 public:
@@ -11,6 +13,9 @@ public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
+
+	static void ExportWorld(const FSkyEngineExportConfig& config);
+	static void ExportHLOD();
 
 private:
 	void PluginButtonClicked();
