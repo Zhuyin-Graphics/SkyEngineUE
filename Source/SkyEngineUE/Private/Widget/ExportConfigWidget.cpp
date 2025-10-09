@@ -29,16 +29,41 @@ namespace sky
 					.AutoHeight()
 					[
 						SNew(STextBlock)
-						.Text(LOCTEXT("ExportPathLabel", "Export Path: "))
+						.Text(LOCTEXT("ExportPathLabel", "SkyEngine Path: "))
 					]
 					+ SVerticalBox::Slot()
 					[
 						SNew(SEditableTextBox)
-						.Text(FText::FromString(ConfigValue.Path))
+						.Text(FText::FromString(ConfigValue.SkyEnginePath))
 						.OnTextChanged_Lambda([this](const FText& NewText) {
-							ConfigValue.Path = NewText.ToString();
+							ConfigValue.SkyEnginePath = NewText.ToString();
 						})
 					]
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("ExportPathLabel", "Export Project Path: "))
+					]
+					+ SVerticalBox::Slot()
+					[
+						SNew(SEditableTextBox)
+						.Text(FText::FromString(ConfigValue.SkyProjectpath))
+						.OnTextChanged_Lambda([this](const FText& NewText) {
+							ConfigValue.SkyProjectpath = NewText.ToString();
+						})
+					]
+					+ SVerticalBox::Slot()
+						.Padding(10)
+						[
+							SNew(SUniformGridPanel)
+								+ SUniformGridPanel::Slot(0, 0)
+								[
+									SNew(SButton)
+										.Text(LOCTEXT("Init Sky Project Environment", "Init"))
+										.OnClicked(this, &FExportConfigWidget::OnEvnInitClicked)
+								]
+						]
 					+ SVerticalBox::Slot()
 					[
 						SNew(SCheckBox)
@@ -70,6 +95,12 @@ namespace sky
 	FReply FExportConfigWidget::OnExportFullClicked() // NOLINT
 	{
 		FSkyEngineUEModule::ExportWorld(ConfigValue);
+		return FReply::Handled();
+	}
+
+	FReply FExportConfigWidget::OnEvnInitClicked() // NOLINT
+	{
+		FSkyEngineUEModule::UpdateSkyEvn(ConfigValue);
 		return FReply::Handled();
 	}
 

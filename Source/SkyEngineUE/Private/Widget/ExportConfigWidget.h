@@ -15,6 +15,7 @@ namespace sky
 		void Construct(const FArguments& InArgs);
 		FReply OnCloseClicked();
 		FReply OnExportFullClicked();
+		FReply OnEvnInitClicked();
 	private:
 		TWeakPtr<SWindow> ParentWindow;
 		FSkyEngineExportConfig ConfigValue;

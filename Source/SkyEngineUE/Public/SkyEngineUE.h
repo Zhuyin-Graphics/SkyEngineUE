@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Modules/ModuleManager.h"
+#include "SkyEngineContext.h"
 
 struct FSkyEngineExportConfig;
 
@@ -14,6 +15,7 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+	static void UpdateSkyEvn(const FSkyEngineExportConfig& config);
 	static void ExportWorld(const FSkyEngineExportConfig& config);
 	static void ExportHLOD();
 

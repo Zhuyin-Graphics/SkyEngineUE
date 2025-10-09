@@ -12,6 +12,8 @@
 
 #define LOCTEXT_NAMESPACE "FSkyEngineUEModule"
 
+std::unique_ptr<sky::SkyEngineContext> g_SkyEngine;
+
 void FSkyEngineUEModule::StartupModule()
 {
 	FSkyEngineUEStyle::Initialize();
@@ -70,6 +72,12 @@ void FSkyEngineUEModule::RegisterMenus() // NOLINT
 	}
 }
 
+void FSkyEngineUEModule::UpdateSkyEvn(const FSkyEngineExportConfig& config)
+{
+	if (!g_SkyEngine) {
+		g_SkyEngine = std::make_unique<sky::SkyEngineContext>(TCHAR_TO_UTF8(*config.SkyEnginePath), TCHAR_TO_UTF8(*config.SkyProjectpath));
+	}
+}
 
 void FSkyEngineUEModule::ExportWorld(const FSkyEngineExportConfig& config)
 {

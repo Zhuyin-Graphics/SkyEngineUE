@@ -7,9 +7,12 @@ USTRUCT(BlueprintType)
 struct FSkyEngineExportConfig
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Export")
-	FString Path = TEXT("C:/UnrealExports/");
+	FString SkyEnginePath = TEXT("");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Export")
+	FString SkyProjectpath = TEXT("");
 	
 	// 导出选项
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Export")
