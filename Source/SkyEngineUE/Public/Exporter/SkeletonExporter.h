@@ -5,15 +5,14 @@
 
 namespace sky {
 
-	class StaticMeshExport {
+	class SkeletonExport {
 	public:
 		struct Payload {
-			TObjectPtr<UStaticMesh> StaticMesh;
-			std::vector<Uuid> Materials;
+			TObjectPtr<USkeleton> Skeleton;
 		};
 
-		explicit StaticMeshExport(const Payload& Payload) : mPayload(Payload) {}
-		~StaticMeshExport() {}
+		explicit SkeletonExport(const Payload& Payload) : mPayload(Payload) {}
+		~SkeletonExport() {}
 
 		void Run();
 

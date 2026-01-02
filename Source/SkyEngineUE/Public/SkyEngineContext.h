@@ -8,6 +8,7 @@ namespace sky {
 	class SkyEngineContext {
 	public:
 		SkyEngineContext(const std::string& enginePath, const std::string& projPath);
+		~SkyEngineContext();
 
 	private:
 		NativeFileSystemPtr workFs;

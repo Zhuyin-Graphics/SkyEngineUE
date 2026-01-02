@@ -8,6 +8,10 @@ namespace sky
 {
 	class FExportConfigWidget final : public SCompoundWidget
 	{
+	public:
+		FExportConfigWidget();
+		~FExportConfigWidget();
+
 		SLATE_BEGIN_ARGS(FExportConfigWidget) {}
 			SLATE_ARGUMENT(TSharedPtr<SWindow>, ParentWindow)
 		SLATE_END_ARGS()
@@ -16,6 +20,9 @@ namespace sky
 		FReply OnCloseClicked();
 		FReply OnExportFullClicked();
 		FReply OnEvnInitClicked();
+
+		void LoadConfig();
+		void SaveConfig() const;
 	private:
 		TWeakPtr<SWindow> ParentWindow;
 		FSkyEngineExportConfig ConfigValue;

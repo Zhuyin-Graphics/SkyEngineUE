@@ -24,3 +24,8 @@ struct FSkyEngineExportConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Export")
 	bool bExportActors = true;
 };
+
+struct FSkyEngineExportContext {
+	TSet<TObjectPtr<USkeleton>>		Skeletons;
+	TSet<TObjectPtr<UAnimSequence>> Sequences;
+};

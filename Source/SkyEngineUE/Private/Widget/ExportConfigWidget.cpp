@@ -4,10 +4,25 @@
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Layout/SUniformGridPanel.h"
 
+#include "Misc/Paths.h"
+#include "Misc/FileHelper.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
+
 #define LOCTEXT_NAMESPACE "ConfigWindow"
 
 namespace sky
 {
+	FExportConfigWidget::FExportConfigWidget()
+	{
+		LoadConfig();
+	}
+
+	FExportConfigWidget::~FExportConfigWidget()
+	{
+		SaveConfig();
+	}
+
 	void FExportConfigWidget::Construct(const FArguments& InArgs)
 	{
 		ParentWindow = InArgs._ParentWindow;
@@ -100,7 +115,7 @@ namespace sky
 
 	FReply FExportConfigWidget::OnEvnInitClicked() // NOLINT
 	{
-		FSkyEngineUEModule::UpdateSkyEvn(ConfigValue);
+		FSkyEngineUEModule::UpdateSkyEnv(ConfigValue);
 		return FReply::Handled();
 	}
 
@@ -112,4 +127,45 @@ namespace sky
 		}
 		return FReply::Handled();
 	}
+
+	void FExportConfigWidget::LoadConfig()
+	{
+		FString IntermediateDir = FPaths::ProjectIntermediateDir();
+		FString ConfigFilePath = FPaths::Combine(IntermediateDir, TEXT("SkyEngineExport.json"));
+
+		FString FileContent;
+		if (!FFileHelper::LoadFileToString(FileContent, *ConfigFilePath))
+		{
+			return;
+		}
+
+		TSharedPtr<FJsonObject> JsonObject;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(FileContent);
+
+		if (!FJsonSerializer::Deserialize(Reader, JsonObject) || !JsonObject.IsValid())
+		{
+			return;
+		}
+
+		JsonObject->TryGetStringField(TEXT("EnginePath"), ConfigValue.SkyEnginePath);
+		JsonObject->TryGetStringField(TEXT("ProjectPath"), ConfigValue.SkyProjectpath);
+	}
+
+	void FExportConfigWidget::SaveConfig() const
+	{
+		FString IntermediateDir = FPaths::ProjectIntermediateDir();
+		FString ConfigFilePath = FPaths::Combine(IntermediateDir, TEXT("SkyEngineExport.json"));
+
+		TSharedPtr<FJsonObject> ConfigObject = MakeShared<FJsonObject>();
+		ConfigObject->SetStringField(TEXT("EnginePath"), ConfigValue.SkyEnginePath);
+		ConfigObject->SetStringField(TEXT("ProjectPath"), ConfigValue.SkyProjectpath);
+
+		FString OutputString;
+		TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+		FJsonSerializer::Serialize(ConfigObject.ToSharedRef(), Writer);
+
+		FFileHelper::SaveStringToFile(OutputString, *ConfigFilePath);
+	}
 } // namespace sky
+
+#undef LOCTEXT_NAMESPACE

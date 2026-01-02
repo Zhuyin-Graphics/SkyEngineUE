@@ -1,11 +1,21 @@
 #pragma once
 
+#include <CoreUObjectClasses.h>
+#include "core/util/Uuid.h"
+
 namespace sky {
 
 	class MaterialExporter {
 	public:
-		explicit MaterialExporter(const TObjectPtr<class UMaterialInterface>& InMaterial);
+		struct Payload {
+			TObjectPtr<class UMaterialInterface> Material;
+			std::vector<Uuid> Textures;
+		};
+
+		explicit MaterialExporter(const Payload& Payload);
 		~MaterialExporter() {}
+
+		const Uuid& GetGuid() const { return mGuid; }
 
 		void Run();
 
@@ -13,8 +23,8 @@ namespace sky {
 		bool ProcessParameters();
 		bool ProcessBaseMaterialInfo();
 
-		TObjectPtr<class UMaterialInterface> Material;
-		class UMaterial *BaseMaterial;
+		Uuid mGuid;
+		Payload mPayload;
 	};
 
 } // namespace sky

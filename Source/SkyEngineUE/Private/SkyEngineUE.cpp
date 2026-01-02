@@ -3,16 +3,92 @@
 #include "SkyEngineUE.h"
 #include "SkyEngineUEStyle.h"
 #include "SkyEngineUECommands.h"
-#include "Widgets/Docking/SDockTab.h"
-#include "Framework/MultiBox/MultiBoxBuilder.h"
 
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Widgets/Docking/SDockTab.h"
 #include "Widget/ExportConfigWidget.h"
+#include "ContentBrowserModule.h"
 
 #include "Exporter/LevelExporter.h"
+#include "Exporter/SkeletonExporter.h"
+#include "Exporter/AnimationSequenceExporter.h"
 
 #define LOCTEXT_NAMESPACE "FSkyEngineUEModule"
 
 std::unique_ptr<sky::SkyEngineContext> g_SkyEngine;
+FSkyEngineExportConfig g_ExportConfig;
+
+void FSkyEngineUEModule::OnProcessAssetsClicked(TArray<FAssetData> SelectedAssets)
+{
+	FSkyEngineExportContext context;
+
+	for (const FAssetData& AssetData : SelectedAssets)
+	{
+		if (UAnimSequence* anim = Cast<UAnimSequence>(AssetData.GetAsset()))
+		{
+			sky::AnimationSequenceExport::Gather(anim, context);
+		}
+	}
+
+	Export(context);
+}
+
+void FSkyEngineUEModule::AddPluginSubMenu(FMenuBuilder& MenuBuilder, TArray<FAssetData> SelectedAssets)
+{
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("ExportAsset", "ExportAsset"),
+		LOCTEXT("ExportAsset", "ExportAsset"),
+		FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.BatchProcess"),
+		FUIAction(
+			FExecuteAction::CreateRaw(
+				this, &FSkyEngineUEModule::OnProcessAssetsClicked,
+				SelectedAssets
+			)
+		)
+	);
+}
+
+void FSkyEngineUEModule::CreateAssetContextMenu(FMenuBuilder& MenuBuilder, TArray<FAssetData> SelectedAssets)
+{
+	MenuBuilder.AddSubMenu(
+		LOCTEXT("SkyEngine", "SkyEngine"),
+		LOCTEXT("SkyEngine", "SkyEngine"),
+		FNewMenuDelegate::CreateRaw(
+			this, &FSkyEngineUEModule::AddPluginSubMenu,
+			SelectedAssets
+		)
+	);
+}
+
+TSharedRef<FExtender> FSkyEngineUEModule::OnExtendContentBrowserAssetSelectionMenu(const TArray<FAssetData>& SelectedAssets)
+{
+	TSharedRef<FExtender> Extender(new FExtender());
+
+	bool bHasSupportedAssets = false;
+	for (const FAssetData& AssetData : SelectedAssets)
+	{
+		if (AssetData.AssetClassPath == UAnimSequence::StaticClass()->GetClassPathName())
+		{
+			bHasSupportedAssets = true;
+			break;
+		}
+	}
+
+	if (bHasSupportedAssets)
+	{
+		Extender->AddMenuExtension(
+			"GetAssetActions",
+			EExtensionHook::After,
+			nullptr,
+			FMenuExtensionDelegate::CreateRaw(
+				this, &FSkyEngineUEModule::CreateAssetContextMenu,
+				SelectedAssets
+			)
+		);
+	}
+
+	return Extender;
+}
 
 void FSkyEngineUEModule::StartupModule()
 {
@@ -27,6 +103,16 @@ void FSkyEngineUEModule::StartupModule()
 		FCanExecuteAction());
 
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FSkyEngineUEModule::RegisterMenus));
+
+	// register asset right click menu
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	TArray<FContentBrowserMenuExtender_SelectedAssets>& CBMenuExtenderDelegates = ContentBrowserModule.GetAllAssetViewContextMenuExtenders();
+	CBMenuExtenderDelegates.Add(
+		FContentBrowserMenuExtender_SelectedAssets::CreateRaw(
+			this, &FSkyEngineUEModule::OnExtendContentBrowserAssetSelectionMenu
+		)
+	);
+
 }
 
 void FSkyEngineUEModule::ShutdownModule()
@@ -36,6 +122,8 @@ void FSkyEngineUEModule::ShutdownModule()
 
 	FSkyEngineUEStyle::Shutdown();
 	FSkyEngineUECommands::Unregister();
+
+	g_SkyEngine = nullptr;
 }
 
 void FSkyEngineUEModule::PluginButtonClicked() // NOLINT
@@ -72,11 +160,18 @@ void FSkyEngineUEModule::RegisterMenus() // NOLINT
 	}
 }
 
-void FSkyEngineUEModule::UpdateSkyEvn(const FSkyEngineExportConfig& config)
+void FSkyEngineUEModule::UpdateSkyEnv(const FSkyEngineExportConfig& config)
 {
-	if (!g_SkyEngine) {
+	if (config.SkyEnginePath.IsEmpty() || config.SkyProjectpath.IsEmpty())
+	{
+		g_SkyEngine = nullptr;
+	}
+	else
+	{
 		g_SkyEngine = std::make_unique<sky::SkyEngineContext>(TCHAR_TO_UTF8(*config.SkyEnginePath), TCHAR_TO_UTF8(*config.SkyProjectpath));
 	}
+
+	g_ExportConfig = config;
 }
 
 void FSkyEngineUEModule::ExportWorld(const FSkyEngineExportConfig& config)
@@ -88,6 +183,19 @@ void FSkyEngineUEModule::ExportWorld(const FSkyEngineExportConfig& config)
 void FSkyEngineUEModule::ExportHLOD()
 {
 
+}
+
+void FSkyEngineUEModule::Export(const FSkyEngineExportContext& context)
+{
+	for (const auto& Skeleton : context.Skeletons) {
+		sky::SkeletonExport Export({ Skeleton });
+		Export.Run();
+	}
+
+	for (const auto& Sequence : context.Sequences) {
+		sky::AnimationSequenceExport Export({ Sequence });
+		Export.Run();
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

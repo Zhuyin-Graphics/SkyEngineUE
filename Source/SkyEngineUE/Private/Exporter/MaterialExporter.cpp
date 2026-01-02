@@ -1,18 +1,26 @@
 #include "Exporter/MaterialExporter.h"
+#include "framework/asset/AssetDataBase.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogSkyEngineExporter, Log, All);
 
 namespace sky {
 
-	MaterialExporter::MaterialExporter(const TObjectPtr<UMaterialInterface>& InMaterial)
-		: Material(InMaterial)
-		, BaseMaterial(InMaterial->GetBaseMaterial())
+	MaterialExporter::MaterialExporter(const Payload& Payload)
+		: mPayload(Payload)
 	{
+		const auto& name = Payload.Material->GetName();
+
+		AssetSourcePath sourcePath = {};
+		sourcePath.bundle = SourceAssetBundle::WORKSPACE;
+		sourcePath.path = FilePath("Materal") / FilePath(*name);
+		sourcePath.path.ReplaceExtension(".mati");
+
+		mGuid = AssetDataBase::CalculateUuidByPath(sourcePath);
 	}
 
 	bool MaterialExporter::ProcessParameters()
 	{
-		UMaterialInstance* MaterialInstance = Cast<UMaterialInstance>(Material);
+		UMaterialInstance* MaterialInstance = Cast<UMaterialInstance>(mPayload.Material);
 		if (MaterialInstance == nullptr)
 		{
 			return false;
@@ -21,7 +29,9 @@ namespace sky {
 		TArray<FMaterialParameterInfo> ParameterInfos;
 		TArray<FGuid> Guids;
 
-		BaseMaterial->GetAllTextureParameterInfo(ParameterInfos, Guids);
+		// mPayload.Material->GetUsedTextures()
+
+		mPayload.Material->GetAllTextureParameterInfo(ParameterInfos, Guids);
 		for (int32 ParameterIdx = 0; ParameterIdx < ParameterInfos.Num(); ParameterIdx++)
 		{
 			const FMaterialParameterInfo& ParameterInfo = ParameterInfos[ParameterIdx];
@@ -31,11 +41,10 @@ namespace sky {
 			if (MaterialInstance->GetTextureParameterValue(ParameterInfo, Value) && Value && Value->AssetImportData)
 			{
 				UE_LOG(LogSkyEngineExporter, Log, TEXT("Exported Material Parameter %s, %s"), *ParameterName.ToString(), *Value->AssetImportData.GetFullName());
-
 			}
 		}
 
-		BaseMaterial->GetAllVectorParameterInfo(ParameterInfos, Guids);
+		mPayload.Material->GetAllVectorParameterInfo(ParameterInfos, Guids);
 		//Query all base material vector parameters.
 		for (int32 ParameterIdx = 0; ParameterIdx < ParameterInfos.Num(); ParameterIdx++)
 		{
@@ -49,7 +58,7 @@ namespace sky {
 			}
 		}
 
-		BaseMaterial->GetAllScalarParameterInfo(ParameterInfos, Guids);
+		mPayload.Material->GetAllScalarParameterInfo(ParameterInfos, Guids);
 		for (int32 ParameterIdx = 0; ParameterIdx < ParameterInfos.Num(); ParameterIdx++)
 		{
 			const FMaterialParameterInfo& ParameterInfo = ParameterInfos[ParameterIdx];
@@ -75,6 +84,7 @@ namespace sky {
 		};
 
 		MaterialDataExport MaterialData = {};
+		auto* BaseMaterial = mPayload.Material->GetBaseMaterial();
 
 		MaterialData.BlendMode = BaseMaterial->GetBlendMode();
 		MaterialData.bTwoSided = BaseMaterial->IsTwoSided();
@@ -88,11 +98,11 @@ namespace sky {
 		case MSM_DefaultLit:
 			break;
 		default:
-			UE_LOG(LogSkyEngineExporter, Error, TEXT("Exported Material %s Failed. Invalid ShadingModel %d"), *Material->GetName(), ShadingModel);
+			UE_LOG(LogSkyEngineExporter, Error, TEXT("Exported Material %s Failed. Invalid ShadingModel %d"), *mPayload.Material->GetName(), ShadingModel);
 			return false;
 		}
 
-		UE_LOG(LogSkyEngineExporter, Log, TEXT("Exported Material %s"), *Material->GetName());
+		UE_LOG(LogSkyEngineExporter, Log, TEXT("Exported Material %s"), *mPayload.Material->GetName());
 		return true;
 	};
 
@@ -101,7 +111,7 @@ namespace sky {
 		ProcessBaseMaterialInfo();
 		ProcessParameters();
 
-		UE_LOG(LogSkyEngineExporter, Log, TEXT("Exported Material %s"), *Material->GetName());
+		UE_LOG(LogSkyEngineExporter, Log, TEXT("Exported Material %s"), *mPayload.Material->GetFullName());
 	}
 
 } // namespace sky

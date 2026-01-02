@@ -45,7 +45,9 @@ public class SkyEngineUE : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-			}
+                "Json",
+                "JsonUtilities"
+            }
 			);
 		
 		
@@ -68,7 +70,11 @@ public class SkyEngineUE : ModuleRules
 
         PublicAdditionalLibraries.Add(Path.Combine(LibsPath, "Core.lib"));
         PublicAdditionalLibraries.Add(Path.Combine(LibsPath, "Framework.lib"));
+        PublicAdditionalLibraries.Add(Path.Combine(LibsPath, "Animation.lib"));
         PublicAdditionalLibraries.Add(Path.Combine(LibsPath, "RenderAdaptor.lib"));
+        PublicAdditionalLibraries.Add(Path.Combine(LibsPath, "RenderCore.lib"));
+        PublicAdditionalLibraries.Add(Path.Combine(LibsPath, "RHI.lib"));
+        PublicAdditionalLibraries.Add(Path.Combine(LibsPath, "ShaderCompiler.Static.lib"));
 
         return true;
     }
@@ -81,7 +87,9 @@ public class SkyEngineUE : ModuleRules
 			"rapidjson",
 			"crc32c",
 			"taskflow",
-			"sfmt"
+			"sfmt",
+			"animation",
+			"shader"
 		};
 
         string ThirdPartyPath = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty"));
