@@ -3,10 +3,12 @@
 #pragma once
 
 #include "Modules/ModuleManager.h"
-#include "SkyEngineContext.h"
 
 struct FSkyEngineExportConfig;
-struct FSkyEngineExportContext;
+
+namespace sky {
+	struct SkyEngineExportContext;
+} // namespace sky
 
 class FSkyEngineUEModule : public IModuleInterface
 {
@@ -20,7 +22,7 @@ public:
 	static void ExportWorld(const FSkyEngineExportConfig& config);
 	static void ExportHLOD();
 
-	static void Export(const FSkyEngineExportContext& context);
+	static void Export(const sky::SkyEngineExportContext& context);
 
 private:
 	void PluginButtonClicked();

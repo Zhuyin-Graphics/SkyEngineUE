@@ -17,4 +17,30 @@ namespace sky{
 
 	Quaternion FromUE(const FQuat& quat);
 
+	template <typename T>
+	Vector3 UEToRHYUpPosition(const UE::Math::TVector<T>& vec)
+	{
+		return Vector3(
+			static_cast<float>(vec.X),    // X -> X
+			static_cast<float>(vec.Z),    // Z -> Y
+			static_cast<float>(-vec.Y)    // Y -> -Z
+		);
+	}
+
+	template <typename T>
+	Quaternion UEToRHYUpRotation(const UE::Math::TQuat<T>& quat)
+	{
+		UE::Math::TRotator<T> UnrealRot = quat.Rotator();
+
+		UE::Math::TVector<T> RH_Euler(
+			UnrealRot.Roll,
+			UnrealRot.Yaw,
+			-UnrealRot.Pitch
+		);
+
+		auto Result = UE::Math::TQuat<T>::MakeFromEuler(RH_Euler);
+
+		return Quaternion(Result.W, Result.X, Result.Y, Result.Z);
+	}
+
 } // namespace sky

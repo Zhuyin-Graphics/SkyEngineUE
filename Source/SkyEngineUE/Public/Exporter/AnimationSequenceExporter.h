@@ -1,26 +1,29 @@
 #pragma once
 #include <CoreUObjectClasses.h>
 #include "core/util/Uuid.h"
+#include "Exporter/ExporterBase.h"
 #include <vector>
-
-struct FSkyEngineExportContext;
 
 namespace sky {
 
-	class AnimationSequenceExport {
+	class AnimationSequenceExport : public ExporterBase {
 	public:
 		struct Payload {
 			TObjectPtr<UAnimSequence> Sequence;
+			std::vector<Uuid> Deps;
 		};
 
 		explicit AnimationSequenceExport(const Payload& Payload) : mPayload(Payload) {}
-		~AnimationSequenceExport() {}
+		~AnimationSequenceExport() override {}
 
-		static void Gather(UAnimSequence* sequence, FSkyEngineExportContext& context);
+		static bool Gather(UAnimSequence* Sequence, SkyEngineExportContext& context, std::vector<sky::Uuid>& deps);
 
-		void Run();
+		void Init() override;
+		void Run() override;
 
 	private:
+		bool UseDataModel();
+
 		Payload mPayload;
 	};
 

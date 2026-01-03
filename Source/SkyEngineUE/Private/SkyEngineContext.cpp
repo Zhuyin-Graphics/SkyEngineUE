@@ -2,6 +2,8 @@
 #include "SkyEngineContext.h"
 #include "Framework/asset/AssetManager.h"
 #include "framework/asset/AssetDataBase.h"
+#include "framework/serialization/SerializationContext.h"
+#include "framework/asset/AssetBuilderManager.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogSkyEngineExporter, Log, All);
 
@@ -12,10 +14,14 @@ namespace sky {
 		workFs = new NativeFileSystem(proj);
 		engineFs = new NativeFileSystem(engine);
 
+		auto* am = AssetBuilderManager::Get();
+
 		AssetManager::Get()->SetWorkFileSystem(workFs);
 		AssetDataBase::Get()->SetEngineFs(engineFs);
 		AssetDataBase::Get()->SetWorkSpaceFs(workFs);
 		AssetDataBase::Get()->Load();
+
+		SerializationContext::Get();
 	}
 
 	SkyEngineContext::~SkyEngineContext()
@@ -27,6 +33,11 @@ namespace sky {
 			UE_LOG(LogSkyEngineExporter, Log, TEXT("export db path %hs"), path.c_str());
 		}
 
+		Save();
+	}
+
+	void SkyEngineContext::Save()
+	{
 		AssetDataBase::Get()->Save();
 	}
 

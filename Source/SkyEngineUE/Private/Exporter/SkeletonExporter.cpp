@@ -5,6 +5,15 @@
 
 namespace sky {
 
+	void SkeletonExport::Init()
+	{
+		auto skeletonName = mPayload.Skeleton->GetName();
+
+		mPath.bundle = SourceAssetBundle::WORKSPACE;
+		mPath.path = FilePath("Skeleton") / FilePath(*skeletonName);
+		mPath.path.ReplaceExtension(".skeleton");
+	}
+
 	void SkeletonExport::Run()
 	{
 		const FReferenceSkeleton& RefSkeleton = mPayload.Skeleton->GetReferenceSkeleton();
@@ -14,37 +23,32 @@ namespace sky {
 		skeletonData.boneData.resize(NumBones);
 		skeletonData.refPos.resize(NumBones);
 
-		auto skeletonName = mPayload.Skeleton->GetName();
 
 		for (int32 BoneIndex = 0; BoneIndex < NumBones; BoneIndex++)
 		{
 			FName BoneName = RefSkeleton.GetBoneName(BoneIndex);
 			int32 ParentIndex = RefSkeleton.GetParentIndex(BoneIndex);
-			FTransform LocalTransform = RefSkeleton.GetRefBonePose()[BoneIndex];
+			const FTransform &LocalTransform = RefSkeleton.GetRefBonePose()[BoneIndex];
 
 			auto& SkyBone = skeletonData.boneData[BoneIndex];
 			SkyBone.name = sky::Name(TCHAR_TO_UTF8(*BoneName.ToString()));
 			SkyBone.parentIndex = static_cast<sky::BoneIndex>(ParentIndex);
 
 			auto& SkyPos = skeletonData.refPos[BoneIndex];
-			SkyPos.translation = FromUE(LocalTransform.GetLocation());
+			SkyPos.translation = UEToRHYUpPosition(LocalTransform.GetLocation());
 			SkyPos.rotation = FromUE(LocalTransform.GetRotation());
 			SkyPos.scale = FromUE(LocalTransform.GetScale3D());
 		}
 
-		AssetSourcePath sourcePath = {};
-		sourcePath.bundle = SourceAssetBundle::WORKSPACE;
-		sourcePath.path = FilePath("Skeleton") / FilePath(*skeletonName);
-		sourcePath.path.ReplaceExtension(".skeleton");
-
 		{
-			auto file = AssetDataBase::Get()->CreateOrOpenFile(sourcePath);
+			auto file = AssetDataBase::Get()->CreateOrOpenFile(mPath);
 			auto archive = file->WriteAsArchive();
 			JsonOutputArchive json(*archive);
 			skeletonData.SaveJson(json);
 		}
 
-		AssetDataBase::Get()->RegisterAsset(sourcePath, false);
+		auto skeletonSource = AssetDataBase::Get()->RegisterAsset(mPath, false);
+		skeletonSource->category = AssetTraits<Skeleton>::ASSET_TYPE;
 	}
 
 } // namespace sky

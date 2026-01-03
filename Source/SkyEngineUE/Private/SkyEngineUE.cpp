@@ -8,6 +8,7 @@
 #include "Widgets/Docking/SDockTab.h"
 #include "Widget/ExportConfigWidget.h"
 #include "ContentBrowserModule.h"
+#include "SkyEngineContext.h"
 
 #include "Exporter/LevelExporter.h"
 #include "Exporter/SkeletonExporter.h"
@@ -20,13 +21,23 @@ FSkyEngineExportConfig g_ExportConfig;
 
 void FSkyEngineUEModule::OnProcessAssetsClicked(TArray<FAssetData> SelectedAssets)
 {
-	FSkyEngineExportContext context;
+	sky::SkyEngineExportContext context;
 
 	for (const FAssetData& AssetData : SelectedAssets)
 	{
 		if (UAnimSequence* anim = Cast<UAnimSequence>(AssetData.GetAsset()))
 		{
-			sky::AnimationSequenceExport::Gather(anim, context);
+			std::vector<sky::Uuid> Deps;
+			if (sky::AnimationSequenceExport::Gather(anim, context, Deps)) {
+				sky::AnimationSequenceExport::Payload Payload = {};
+				Payload.Sequence = anim;
+				Payload.Deps.swap(Deps);
+
+				auto* SeqTask = new sky::AnimationSequenceExport(Payload);
+				SeqTask->Init();
+
+				context.Tasks.Emplace(anim->GetOutermost()->GetPersistentGuid(), SeqTask);
+			}
 		}
 	}
 
@@ -185,16 +196,14 @@ void FSkyEngineUEModule::ExportHLOD()
 
 }
 
-void FSkyEngineUEModule::Export(const FSkyEngineExportContext& context)
+void FSkyEngineUEModule::Export(const sky::SkyEngineExportContext& context)
 {
-	for (const auto& Skeleton : context.Skeletons) {
-		sky::SkeletonExport Export({ Skeleton });
-		Export.Run();
+	for (const auto& [Guid, Task] : context.Tasks) {
+		Task->Run();
 	}
 
-	for (const auto& Sequence : context.Sequences) {
-		sky::AnimationSequenceExport Export({ Sequence });
-		Export.Run();
+	if (g_SkyEngine != nullptr) {
+		g_SkyEngine->Save();
 	}
 }
 
