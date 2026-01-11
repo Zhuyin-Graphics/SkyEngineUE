@@ -2,28 +2,29 @@
 
 #include <CoreUObjectClasses.h>
 #include "core/util/Uuid.h"
+#include "Exporter/ExporterBase.h"
 
 namespace sky {
 
-	class MaterialExporter {
+	class MaterialExporter : public ExporterBase {
 	public:
 		struct Payload {
 			TObjectPtr<class UMaterialInterface> Material;
-			std::vector<Uuid> Textures;
+			TMap<FName, Uuid> Textures;
 		};
 
 		explicit MaterialExporter(const Payload& Payload);
 		~MaterialExporter() {}
 
-		const Uuid& GetGuid() const { return mGuid; }
+		static bool Gather(UMaterialInterface* Material, struct SkyEngineExportContext& Context, Payload& Payload);
 
-		void Run();
+		void Init() override;
+		void Run() override;
 
 	private:
 		bool ProcessParameters();
 		bool ProcessBaseMaterialInfo();
 
-		Uuid mGuid;
 		Payload mPayload;
 	};
 

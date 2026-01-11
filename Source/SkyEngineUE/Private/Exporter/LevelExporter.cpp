@@ -111,13 +111,6 @@ namespace sky {
 		for (auto& StaticMesh : UniqueMeshes)
 		{
 			StaticMeshExport::Payload payload = { StaticMesh };
-
-			auto StaticMaterialArray = StaticMesh->GetStaticMaterials();
-			for (const auto& Mat : StaticMaterialArray)
-			{
-				auto& MatExport = UniqueMaterials[Mat.MaterialInterface->GetPathName()];
-				payload.Materials.emplace_back(MatExport.GetGuid());
-			}
 			StaticMeshExport MeshExport(payload);
 			MeshExport.Run();
 		}

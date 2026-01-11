@@ -149,6 +149,8 @@ namespace sky
 
 		JsonObject->TryGetStringField(TEXT("EnginePath"), ConfigValue.SkyEnginePath);
 		JsonObject->TryGetStringField(TEXT("ProjectPath"), ConfigValue.SkyProjectpath);
+
+		FSkyEngineUEModule::UpdateSkyEnv(ConfigValue);
 	}
 
 	void FExportConfigWidget::SaveConfig() const

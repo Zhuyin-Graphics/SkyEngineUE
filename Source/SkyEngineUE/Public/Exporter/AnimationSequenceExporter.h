@@ -10,13 +10,13 @@ namespace sky {
 	public:
 		struct Payload {
 			TObjectPtr<UAnimSequence> Sequence;
-			std::vector<Uuid> Deps;
+			Uuid Skeleton;
 		};
 
 		explicit AnimationSequenceExport(const Payload& Payload) : mPayload(Payload) {}
 		~AnimationSequenceExport() override {}
 
-		static bool Gather(UAnimSequence* Sequence, SkyEngineExportContext& context, std::vector<sky::Uuid>& deps);
+		static bool Gather(UAnimSequence* Sequence, SkyEngineExportContext& context, sky::Uuid& deps);
 
 		void Init() override;
 		void Run() override;

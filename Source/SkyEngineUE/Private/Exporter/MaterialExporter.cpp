@@ -1,5 +1,8 @@
 #include "Exporter/MaterialExporter.h"
-#include "framework/asset/AssetDataBase.h"
+#include "Exporter/TextureExporter.h"
+#include "SkyEngineContext.h"
+#include <framework/asset/AssetDataBase.h>
+#include <render/adaptor/assets/MaterialAsset.h>
 
 DEFINE_LOG_CATEGORY_STATIC(LogSkyEngineExporter, Log, All);
 
@@ -8,14 +11,6 @@ namespace sky {
 	MaterialExporter::MaterialExporter(const Payload& Payload)
 		: mPayload(Payload)
 	{
-		const auto& name = Payload.Material->GetName();
-
-		AssetSourcePath sourcePath = {};
-		sourcePath.bundle = SourceAssetBundle::WORKSPACE;
-		sourcePath.path = FilePath("Materal") / FilePath(*name);
-		sourcePath.path.ReplaceExtension(".mati");
-
-		mGuid = AssetDataBase::CalculateUuidByPath(sourcePath);
 	}
 
 	bool MaterialExporter::ProcessParameters()
@@ -106,10 +101,76 @@ namespace sky {
 		return true;
 	};
 
+	bool MaterialExporter::Gather(UMaterialInterface* Material, SkyEngineExportContext& Context, Payload& Payload)
+	{
+		if (Context.Tasks.Find(Material->GetOutermost()->GetPersistentGuid()) != nullptr) {
+			return false;
+		}
+
+		TArray<FMaterialParameterInfo> ParameterInfos;
+		TArray<FGuid> Guids;
+		Material->GetAllTextureParameterInfo(ParameterInfos, Guids);
+
+		for (int32 ParameterIdx = 0; ParameterIdx < ParameterInfos.Num(); ParameterIdx++)
+		{
+			const FMaterialParameterInfo& ParameterInfo = ParameterInfos[ParameterIdx];
+			FName ParameterName = ParameterInfo.Name;
+			UTexture* Value;
+			//Query the material instance parameter overridden value
+			if (Material->GetTextureParameterValue(ParameterInfo, Value) && Value && Value->AssetImportData)
+			{
+				auto TexId = Value->GetOutermost()->GetPersistentGuid();
+
+				if (Context.Tasks.Find(TexId) == nullptr) {
+					auto* Task = new TextureExport(TextureExport::Payload{ Value });
+					Task->Init();
+
+					Context.Tasks.Emplace(TexId, Task);
+				}
+
+				auto* Task = Context.Tasks.Find(TexId);
+				Payload.Textures.Emplace(ParameterName, (*Task)->GetUuid());
+			}
+		}
+
+		return true;
+	}
+
+	void MaterialExporter::Init()
+	{
+		std::string MaterialName = TCHAR_TO_UTF8(*mPayload.Material->GetName());
+
+		mPath.bundle = SourceAssetBundle::WORKSPACE;
+		mPath.path = FilePath("Material") / FilePath(MaterialName);
+		mPath.path.ReplaceExtension(".mati");
+	}
+
 	void MaterialExporter::Run()
 	{
-		ProcessBaseMaterialInfo();
-		ProcessParameters();
+		// ProcessBaseMaterialInfo();
+		// ProcessParameters();
+
+		MaterialInstanceData Data = {};
+
+		// default material type
+		{
+			AssetSourcePath engineMat = {};
+			engineMat.bundle = SourceAssetBundle::ENGINE;
+			engineMat.path = "materials/standard_pbr.mat";
+
+			auto Mat = AssetDataBase::Get()->RegisterAsset(engineMat, false);
+			Data.material = Mat->uuid;
+		}
+
+		{
+			auto file = AssetDataBase::Get()->CreateOrOpenFile(mPath);
+			auto archive = file->WriteAsArchive();
+			JsonOutputArchive json(*archive);
+			Data.SaveJson(json);
+		}
+
+		auto ClipSource = AssetDataBase::Get()->RegisterAsset(mPath, false);
+		ClipSource->category = AssetTraits<MaterialInstance>::ASSET_TYPE;
 
 		UE_LOG(LogSkyEngineExporter, Log, TEXT("Exported Material %s"), *mPayload.Material->GetFullName());
 	}

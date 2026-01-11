@@ -23,7 +23,6 @@ namespace sky {
 		skeletonData.boneData.resize(NumBones);
 		skeletonData.refPos.resize(NumBones);
 
-
 		for (int32 BoneIndex = 0; BoneIndex < NumBones; BoneIndex++)
 		{
 			FName BoneName = RefSkeleton.GetBoneName(BoneIndex);
@@ -35,7 +34,7 @@ namespace sky {
 			SkyBone.parentIndex = static_cast<sky::BoneIndex>(ParentIndex);
 
 			auto& SkyPos = skeletonData.refPos[BoneIndex];
-			SkyPos.translation = UEToRHYUpPosition(LocalTransform.GetLocation());
+			SkyPos.translation = FromUE(LocalTransform.GetLocation());
 			SkyPos.rotation = FromUE(LocalTransform.GetRotation());
 			SkyPos.scale = FromUE(LocalTransform.GetScale3D());
 		}

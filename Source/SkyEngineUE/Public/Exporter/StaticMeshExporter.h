@@ -1,11 +1,12 @@
 #pragma once
 #include <CoreUObjectClasses.h>
+#include "Exporter/ExporterBase.h"
 #include "core/util/Uuid.h"
 #include <vector>
 
 namespace sky {
 
-	class StaticMeshExport {
+	class StaticMeshExport : public ExporterBase {
 	public:
 		struct Payload {
 			TObjectPtr<UStaticMesh> StaticMesh;
@@ -15,7 +16,10 @@ namespace sky {
 		explicit StaticMeshExport(const Payload& Payload) : mPayload(Payload) {}
 		~StaticMeshExport() {}
 
-		void Run();
+		static bool Gather(UStaticMesh* mesh, struct SkyEngineExportContext& context, Payload& deps);
+
+		void Init() override;
+		void Run() override;
 
 	private:
 		Payload mPayload;

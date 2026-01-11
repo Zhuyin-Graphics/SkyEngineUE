@@ -1,21 +1,26 @@
 #pragma once
 #include <CoreUObjectClasses.h>
+#include "Exporter/ExporterBase.h"
 #include "core/util/Uuid.h"
 #include <vector>
 
 namespace sky {
 
-	class SkeletonMeshExport {
+	class SkeletalMeshExport : public ExporterBase {
 	public:
 		struct Payload {
-			TObjectPtr<UStaticMesh> StaticMesh;
+			TObjectPtr<USkeletalMesh> Mesh;
+			Uuid Skeleton;
 			std::vector<Uuid> Materials;
 		};
 
-		explicit SkeletonMeshExport(const Payload& Payload) : mPayload(Payload) {}
-		~SkeletonMeshExport() {}
+		explicit SkeletalMeshExport(const Payload& Payload) : mPayload(Payload) {}
+		~SkeletalMeshExport() {}
 
-		void Run();
+		static bool Gather(USkeletalMesh* mesh, struct SkyEngineExportContext& context, Payload& deps);
+
+		void Init() override;
+		void Run() override;
 
 	private:
 		Payload mPayload;

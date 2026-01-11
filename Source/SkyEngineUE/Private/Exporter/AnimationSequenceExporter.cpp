@@ -22,7 +22,7 @@ namespace sky {
 		return DataModel != nullptr && DataModel->GetNumberOfFrames() > 0;
 	}
 
-	bool AnimationSequenceExport::Gather(UAnimSequence* Sequence, SkyEngineExportContext& context, std::vector<sky::Uuid>& deps)
+	bool AnimationSequenceExport::Gather(UAnimSequence* Sequence, SkyEngineExportContext& context, sky::Uuid &outDep)
 	{
 		if (context.Tasks.Find(Sequence->GetOutermost()->GetPersistentGuid()) != nullptr) {
 			return false;
@@ -39,7 +39,7 @@ namespace sky {
 		}
 
 		auto* Task = context.Tasks.Find(SkeletonGuid);
-		deps.emplace_back((*Task)->GetUuid());
+		outDep = (*Task)->GetUuid();
 
 		return true;
 	}
@@ -50,7 +50,7 @@ namespace sky {
 
 		mPath.bundle = SourceAssetBundle::WORKSPACE;
 		mPath.path = FilePath("Animation") / FilePath(SequenceName);
-		mPath.path.ReplaceExtension(".anim");
+		mPath.path.ReplaceExtension(".clip");
 	}
 
 	void AnimationSequenceExport::Run()
@@ -66,9 +66,10 @@ namespace sky {
 			TArray<FName> BoneTrackNames;
 			DataModel->GetBoneTrackNames(BoneTrackNames);
 
-			AnimationAssetData ClipData = {};
+			AnimationClipAssetData ClipData = {};
 			ClipData.name = TCHAR_TO_UTF8(*mPayload.Sequence->GetName());
 			ClipData.frameRate = FrameRate.AsDecimal();
+			ClipData.skeleton = mPayload.Skeleton;
 			ClipData.nodeChannels.resize(NumTracks);
 
 			for (int32 Index = 0; Index < NumTracks; ++Index) {
@@ -88,7 +89,7 @@ namespace sky {
 					Channel.scale.times[Frame] = Frame;
 					Channel.rotation.times[Frame] = Frame;
 
-					Channel.position.keys[Frame] = UEToRHYUpPosition(Trans.GetLocation());
+					Channel.position.keys[Frame] = FromUE(Trans.GetLocation());
 					Channel.rotation.keys[Frame] = FromUE(Trans.GetRotation());
 					Channel.scale.keys[Frame] = FromUE(Trans.GetScale3D());
 				}
@@ -102,7 +103,7 @@ namespace sky {
 			}
 
 			auto ClipSource = AssetDataBase::Get()->RegisterAsset(mPath, false);
-			ClipSource->category = AssetTraits<Animation>::ASSET_TYPE;
+			ClipSource->category = AssetTraits<AnimationClip>::ASSET_TYPE;
 
 		}
 	}

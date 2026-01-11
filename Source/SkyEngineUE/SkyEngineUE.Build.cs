@@ -56,6 +56,8 @@ public class SkyEngineUE : ModuleRules
 			{
 			}
 			);
+
+		PrivateDefinitions.Add("SKY_EDITOR=1");
 	}
 
     public bool AddSkyEngineLibrary(ReadOnlyTargetRules Target)

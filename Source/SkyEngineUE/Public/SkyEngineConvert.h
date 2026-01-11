@@ -22,8 +22,8 @@ namespace sky{
 	{
 		return Vector3(
 			static_cast<float>(vec.X),    // X -> X
-			static_cast<float>(vec.Z),    // Z -> Y
-			static_cast<float>(-vec.Y)    // Y -> -Z
+			static_cast<float>(-vec.Z),    // Z -> Y
+			static_cast<float>(vec.Y)    // Y -> -Z
 		);
 	}
 

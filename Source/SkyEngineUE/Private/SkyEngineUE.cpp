@@ -12,6 +12,8 @@
 
 #include "Exporter/LevelExporter.h"
 #include "Exporter/SkeletonExporter.h"
+#include "Exporter/SkeletalMeshExporter.h"
+#include "Exporter/StaticMeshExporter.h"
 #include "Exporter/AnimationSequenceExporter.h"
 
 #define LOCTEXT_NAMESPACE "FSkyEngineUEModule"
@@ -27,16 +29,36 @@ void FSkyEngineUEModule::OnProcessAssetsClicked(TArray<FAssetData> SelectedAsset
 	{
 		if (UAnimSequence* anim = Cast<UAnimSequence>(AssetData.GetAsset()))
 		{
-			std::vector<sky::Uuid> Deps;
-			if (sky::AnimationSequenceExport::Gather(anim, context, Deps)) {
-				sky::AnimationSequenceExport::Payload Payload = {};
-				Payload.Sequence = anim;
-				Payload.Deps.swap(Deps);
+			sky::AnimationSequenceExport::Payload Payload = {};
+			Payload.Sequence = anim;
+			if (sky::AnimationSequenceExport::Gather(anim, context, Payload.Skeleton)) {
+				auto* Task = new sky::AnimationSequenceExport(Payload);
+				Task->Init();
 
-				auto* SeqTask = new sky::AnimationSequenceExport(Payload);
-				SeqTask->Init();
+				context.Tasks.Emplace(anim->GetOutermost()->GetPersistentGuid(), Task);
+			}
+		}
+		else if (USkeletalMesh* SkeletalMesh = Cast<USkeletalMesh>(AssetData.GetAsset()))
+		{
+			sky::SkeletalMeshExport::Payload Payload = {};
+			Payload.Mesh = SkeletalMesh;
+			if (sky::SkeletalMeshExport::Gather(SkeletalMesh, context, Payload)) {
+				auto* Task = new sky::SkeletalMeshExport(Payload);
+				Task->Init();
 
-				context.Tasks.Emplace(anim->GetOutermost()->GetPersistentGuid(), SeqTask);
+				context.Tasks.Emplace(SkeletalMesh->GetOutermost()->GetPersistentGuid(), Task);
+			}
+
+		}
+		else if (UStaticMesh* StaticMesh = Cast<UStaticMesh>(AssetData.GetAsset()))
+		{
+			sky::StaticMeshExport::Payload Payload = {};
+			Payload.StaticMesh = StaticMesh;
+			if (sky::StaticMeshExport::Gather(StaticMesh, context, Payload)) {
+				auto* Task = new sky::StaticMeshExport(Payload);
+				Task->Init();
+
+				context.Tasks.Emplace(StaticMesh->GetOutermost()->GetPersistentGuid(), Task);
 			}
 		}
 	}
@@ -78,7 +100,10 @@ TSharedRef<FExtender> FSkyEngineUEModule::OnExtendContentBrowserAssetSelectionMe
 	bool bHasSupportedAssets = false;
 	for (const FAssetData& AssetData : SelectedAssets)
 	{
-		if (AssetData.AssetClassPath == UAnimSequence::StaticClass()->GetClassPathName())
+		if (AssetData.AssetClassPath == UAnimSequence::StaticClass()->GetClassPathName() ||
+			AssetData.AssetClassPath == USkeletalMesh::StaticClass()->GetClassPathName() ||
+			AssetData.AssetClassPath == UStaticMesh::StaticClass()->GetClassPathName() ||
+			AssetData.AssetClassPath == UTexture::StaticClass()->GetClassPathName())
 		{
 			bHasSupportedAssets = true;
 			break;
