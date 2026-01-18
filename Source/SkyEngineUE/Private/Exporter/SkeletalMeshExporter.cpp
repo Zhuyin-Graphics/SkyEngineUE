@@ -3,6 +3,7 @@
 #include "Exporter/MaterialExporter.h"
 #include "SkyEngineContext.h"
 
+#include <Engine/SkinnedAssetCommon.h>
 #include <Rendering/SkeletalMeshRenderData.h>
 
 namespace sky {

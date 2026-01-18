@@ -7,8 +7,6 @@
 
 #include "EngineUtils.h"
 
-DEFINE_LOG_CATEGORY_STATIC(LogSkyEngineExporter, Log, All);
-
 namespace sky {
 
 	void GetAllInheritedTextures(UMaterialInstance* MaterialInstance, TArray<UTexture*>& OutTextures)

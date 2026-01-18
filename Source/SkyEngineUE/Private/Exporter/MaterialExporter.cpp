@@ -1,12 +1,20 @@
 #include "Exporter/MaterialExporter.h"
 #include "Exporter/TextureExporter.h"
 #include "SkyEngineContext.h"
+#include "SkyEngineUEExport.h"
+
+#include <IMaterialBakingModule.h>
 #include <framework/asset/AssetDataBase.h>
 #include <render/adaptor/assets/MaterialAsset.h>
 
-DEFINE_LOG_CATEGORY_STATIC(LogSkyEngineExporter, Log, All);
 
 namespace sky {
+
+	static void BakeMaterialProperty()
+	{
+
+	}
+
 
 	MaterialExporter::MaterialExporter(const Payload& Payload)
 		: mPayload(Payload)

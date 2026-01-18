@@ -5,7 +5,7 @@
 
 #include "WorldPartition/WorldPartition.h"
 
-DEFINE_LOG_CATEGORY_STATIC(LogSkyEngineExporter, Log, All);
+DEFINE_LOG_CATEGORY(LogSkyEngineExporter);
 
 namespace sky {
 

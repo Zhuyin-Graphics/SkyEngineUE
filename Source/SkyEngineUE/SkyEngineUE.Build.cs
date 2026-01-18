@@ -31,9 +31,8 @@ public class SkyEngineUE : ModuleRules
 				"Core",
 			}
 			);
-			
-		
-		PrivateDependencyModuleNames.AddRange(
+
+        PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
 				"Projects",
@@ -46,7 +45,8 @@ public class SkyEngineUE : ModuleRules
 				"Slate",
 				"SlateCore",
                 "Json",
-                "JsonUtilities"
+                "JsonUtilities",
+                "MaterialBaking"
             }
 			);
 		

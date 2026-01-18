@@ -24,3 +24,6 @@ struct FSkyEngineExportConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Export")
 	bool bExportActors = true;
 };
+
+
+DECLARE_LOG_CATEGORY_EXTERN(LogSkyEngineExporter, Log, All);

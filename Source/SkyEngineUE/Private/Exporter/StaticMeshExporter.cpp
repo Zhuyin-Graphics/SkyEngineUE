@@ -6,8 +6,6 @@
 #include <render/adaptor/assets/MeshAsset.h>
 #include <framework/asset/AssetDataBase.h>
 
-DEFINE_LOG_CATEGORY_STATIC(LogSkyEngineExporter, Log, All);
-
 namespace sky {
 
 
@@ -60,14 +58,14 @@ namespace sky {
 
 		for (uint32_t i = 0; i < num; i += 3)
 		{
-			const T& i0 = src[i * 3 + 0];
-			const T& i1 = src[i * 3 + 1];
-			const T& i2 = src[i * 3 + 2];
+			const T& i0 = src[i + 0];
+			const T& i1 = src[i + 1];
+			const T& i2 = src[i + 2];
 
 
-			dst[i * 3 + 0] = i0;
-			dst[i * 3 + 1] = i2;
-			dst[i * 3 + 2] = i1;
+			dst[i + 0] = i0;
+			dst[i + 1] = i2;
+			dst[i + 2] = i1;
 		}
 	}
 
@@ -81,7 +79,8 @@ namespace sky {
 			return;
 		}
 
-		auto& Resource = StaticMesh->GetRenderData()->LODResources[0];
+		auto* RenderData = StaticMesh->GetRenderData();
+		auto& Resource = RenderData->LODResources[0];
 
 		// Vertices Num
 		uint32_t NumVertices = Resource.VertexBuffers.PositionVertexBuffer.GetNumVertices();
@@ -99,8 +98,8 @@ namespace sky {
 			const FVector3f& Position = Resource.VertexBuffers.PositionVertexBuffer.VertexPosition(j);
 
 			FVector2f UV0 = Resource.VertexBuffers.StaticMeshVertexBuffer.GetVertexUV(j, 0);
-			FVector4f Normal = Resource.VertexBuffers.StaticMeshVertexBuffer.VertexTangentX(j);
-			FVector4f Tangent = Resource.VertexBuffers.StaticMeshVertexBuffer.VertexTangentZ(j);
+			FVector4f Normal = Resource.VertexBuffers.StaticMeshVertexBuffer.VertexTangentZ(j);
+			FVector4f Tangent = Resource.VertexBuffers.StaticMeshVertexBuffer.VertexTangentX(j);
 
 			OutMesh->SetPosition(j, FromUE(Position));
 			OutMesh->SetTangent(j, Vector3(Normal.X, Normal.Y, Normal.Z), FromUE(Tangent));
@@ -110,16 +109,21 @@ namespace sky {
 		uint8_t* RawIndexPtr = OutMesh->GetIndexBuffer()->GetDataPointer();
 		if (IndexType == rhi::IndexType::U16)
 		{
-			// Convert<uint16_t>(RawIndexPtr, NumIndices, Resource.IndexBuffer.AccessStream16());
-			memcpy(RawIndexPtr, Resource.IndexBuffer.AccessStream16(), NumIndices * sizeof(uint16_t));
+			Convert<uint16_t>(RawIndexPtr, NumIndices, Resource.IndexBuffer.AccessStream16());
+			// memcpy(RawIndexPtr, Resource.IndexBuffer.AccessStream16(), NumIndices * sizeof(uint16_t));
 		}
 		else
 		{
-			// Convert<uint32_t>(RawIndexPtr, NumIndices, Resource.IndexBuffer.AccessStream32());
-			memcpy(RawIndexPtr, Resource.IndexBuffer.AccessStream32(), NumIndices * sizeof(uint32_t));
+			Convert<uint32_t>(RawIndexPtr, NumIndices, Resource.IndexBuffer.AccessStream32());
+			// memcpy(RawIndexPtr, Resource.IndexBuffer.AccessStream32(), NumIndices * sizeof(uint32_t));
 		}
 
+#if ENGINE_MINOR_VERSION >= 5
 		auto Box = Resource.SourceMeshBounds.GetBox();
+#else
+		auto Box = RenderData->Bounds.GetBox();
+#endif
+		
 		auto Center = Box.GetCenter();
 		auto Ext = Box.GetExtent();
 
@@ -158,6 +162,7 @@ namespace sky {
 
 		auto Source = AssetDataBase::Get()->RegisterAsset(mPath, false);
 		Source->category = AssetTraits<Mesh>::ASSET_TYPE;
+		Source->dependencies = staticMeshAsset.materials;
 
 #if 0
 		auto& StaticMesh = mPayload.StaticMesh;

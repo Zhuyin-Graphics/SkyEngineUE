@@ -1,11 +1,10 @@
 
 #include "SkyEngineContext.h"
+#include "SkyEngineUEExport.h"
 #include "Framework/asset/AssetManager.h"
 #include "framework/asset/AssetDataBase.h"
 #include "framework/serialization/SerializationContext.h"
 #include "framework/asset/AssetBuilderManager.h"
-
-DEFINE_LOG_CATEGORY_STATIC(LogSkyEngineExporter, Log, All);
 
 namespace sky {
 
