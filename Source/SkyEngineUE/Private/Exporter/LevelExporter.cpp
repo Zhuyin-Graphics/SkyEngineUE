@@ -2,66 +2,26 @@
 #include "Exporter/StaticMeshExporter.h"
 #include "Exporter/MaterialExporter.h"
 
-#include "Materials/Material.h"
-#include "Materials/MaterialInstance.h"
+#include "SkyEngineContext.h"
+#include "SkyEngineUEExport.h"
+#include "SkyEngineConvert.h"
+
+#include <framework/asset/AssetDataBase.h>
+#include <render/adaptor/assets/RenderPrefab.h>
 
 #include "EngineUtils.h"
 
 namespace sky {
 
-	void GetAllInheritedTextures(UMaterialInstance* MaterialInstance, TArray<UTexture*>& OutTextures)
+	void LevelExport::Gather(UWorld* World, SkyEngineExportContext& Context, RenderPrefabAssetData& PrefabData, std::vector<Uuid>& Deps)
 	{
-		if (!MaterialInstance) return;
-
-		TArray<UTexture*> CurrentTextures;
-		MaterialInstance->GetUsedTextures(CurrentTextures, EMaterialQualityLevel::High, true, ERHIFeatureLevel::SM5, true);
-
-		for (UTexture* Texture : CurrentTextures)
-		{
-			if (Texture && !OutTextures.Contains(Texture))
-			{
-				OutTextures.Add(Texture);
-			}
-		}
-		UMaterialInterface* Parent = MaterialInstance->Parent;
-		while (Parent)
-		{
-			TArray<UTexture*> ParentTextures;
-			Parent->GetUsedTextures(ParentTextures, EMaterialQualityLevel::High, true, ERHIFeatureLevel::SM5, true);
-
-			for (UTexture* Texture : ParentTextures)
-			{
-				if (Texture && !OutTextures.Contains(Texture))
-				{
-					OutTextures.Add(Texture);
-				}
-			}
-
-			if (UMaterialInstance* ParentInstance = Cast<UMaterialInstance>(Parent))
-			{
-				Parent = ParentInstance->Parent;
-			}
-			else
-			{
-				break;
-			}
-		}
-	}
-
-	void LevelExport::GatherStaticMesh(UWorld* World)
-	{
-		TSet<TObjectPtr<UStaticMesh>> UniqueMeshes;
-		//TSet<TObjectPtr<UMaterialInterface>> UniqueMaterials;
-		TMap<FString, MaterialExporter> UniqueMaterials;
-		
-		TSet<AActor*> UniqueActors;
-		
 		for (TActorIterator<AActor> Iter(World); Iter; ++Iter)
 		{
 			AActor* Actor = *Iter;
 
 			TArray<UStaticMeshComponent*> MeshComponents;
 			Actor->GetComponents<UStaticMeshComponent>(MeshComponents);
+
 
 			for (UStaticMeshComponent* MeshComponent : MeshComponents)
 			{
@@ -70,52 +30,41 @@ namespace sky {
 					continue;
 				}
 
+
 				auto StaticMesh = MeshComponent->GetStaticMesh();
 				if (StaticMesh)
 				{
-					auto StaticMaterialArray = StaticMesh->GetStaticMaterials();
-					for (auto& Mat : StaticMaterialArray)
-					{
-						FString ObjectPath = Mat.MaterialInterface->GetPathName();
-						MaterialExporter::Payload payload = { Mat.MaterialInterface };
-						UniqueMaterials.Emplace(ObjectPath, MaterialExporter(payload));
-
-						TArray<UTexture*> Textures;
-						Mat.MaterialInterface->GetUsedTextures(Textures, EMaterialQualityLevel::High, true, ERHIFeatureLevel::SM5, true);
-
-						for (const auto& Tex : Textures)
-						{
-							TObjectPtr<UTexture> obj(Tex);
-
-							Tex->GetPathName();
-						}
+					sky::StaticMeshExport::Payload Payload = {};
+					Payload.StaticMesh = StaticMesh;
+					if (sky::StaticMeshExport::Gather(StaticMesh, Context, Payload)) {
+						auto* Task = new sky::StaticMeshExport(Payload);
+						Task->Init();
+						Context.Tasks.Emplace(StaticMesh->GetOutermost()->GetPersistentGuid(), Task);
 					}
-					UniqueMeshes.Emplace(StaticMesh);
-				}
 
-				auto Position = MeshComponent->GetRelativeLocation();
-				UE_LOG(LogSkyEngineExporter, Log, TEXT("Exported Actor MeshComponents Component[%f, %f, %f]"),
-					Position.X, Position.Y, Position.Z);
+					auto &Task = Context.Tasks.FindChecked(StaticMesh->GetOutermost()->GetPersistentGuid());
+
+					RenderPrefabNode Data = {};
+
+					Data.name = TCHAR_TO_UTF8(*MeshComponent->GetName());
+					Data.mesh = Task->GetUuid();
+
+					auto iter = std::find(Deps.begin(), Deps.end(), Data.mesh);
+					if (iter == Deps.end())
+					{
+						Deps.emplace_back(Data.mesh);
+					}
+
+					auto Transform = MeshComponent->GetComponentTransform();
+					Data.localTransform.translation = FromUE(Transform.GetTranslation());
+					Data.localTransform.scale = FromUE(Transform.GetScale3D());
+					Data.localTransform.rotation = FromUE(Transform.GetRotation());
+
+					PrefabData.nodes.emplace_back(Data);
+				}
 			}
 
 			UE_LOG(LogSkyEngineExporter, Log, TEXT("Exported Actor MeshComponents %d"), MeshComponents.Num());
-
-			if (MeshComponents.Num() > 0)
-			{
-				UniqueActors.Emplace(Actor);
-			}
-		}
-
-		for (auto& StaticMesh : UniqueMeshes)
-		{
-			StaticMeshExport::Payload payload = { StaticMesh };
-			StaticMeshExport MeshExport(payload);
-			MeshExport.Run();
-		}
-
-		for (auto& [Key, Mat] : UniqueMaterials)
-		{
-			Mat.Run();
 		}
 	}
 
@@ -123,8 +72,31 @@ namespace sky {
 	{
 		UE_LOG(LogSkyEngineExporter, Log, TEXT("Exported %d Actor Count"), World->GetActorCount());
 
+		SkyEngineExportContext Context = {};
+		RenderPrefabAssetData Data = {};
+		std::vector<Uuid> Deps;
+		Gather(World, Context, Data, Deps);
 
-		GatherStaticMesh(World);
+		AssetSourcePath Path = {};
+		Path.bundle = SourceAssetBundle::WORKSPACE;
+		Path.path = FilePath("Prefabs") / FilePath(TCHAR_TO_UTF8(*World->GetName()));
+		Path.path.ReplaceExtension(".prefab");
+
+		{
+			auto file = AssetDataBase::Get()->CreateOrOpenFile(Path);
+			auto archive = file->WriteAsArchive();
+			JsonOutputArchive json(*archive);
+			Data.SaveJson(json);
+		}
+
+		auto Source = AssetDataBase::Get()->RegisterAsset(Path, false);
+		Source->category = AssetTraits<RenderPrefab>::ASSET_TYPE;
+		Source->dependencies.swap(Deps);
+
+
+		for (const auto& [Guid, Task] : Context.Tasks) {
+			Task->Run();
+		}
 	}
 
 	void LevelExport::Run(const FSkyEngineExportConfig& Config)
