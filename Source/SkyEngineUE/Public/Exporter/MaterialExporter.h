@@ -3,6 +3,7 @@
 #include <CoreUObjectClasses.h>
 #include "core/util/Uuid.h"
 #include "Exporter/ExporterBase.h"
+#include <render/adaptor/assets/MaterialAsset.h>
 
 namespace sky {
 
@@ -26,6 +27,8 @@ namespace sky {
 		bool ProcessBaseMaterialInfo();
 
 		Payload mPayload;
+
+		MaterialInstanceData mData;
 	};
 
 } // namespace sky

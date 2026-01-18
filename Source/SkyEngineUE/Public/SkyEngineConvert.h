@@ -3,6 +3,7 @@
 #include "core/math/Vector2.h"
 #include "core/math/Vector3.h"
 #include "core/math/Vector4.h"
+#include "core/math/Color.h"
 #include "core/math/Quaternion.h"
 
 namespace sky{
@@ -16,6 +17,8 @@ namespace sky{
 	Vector3 FromUE(const UE::Math::TVector<double>& vec);
 
 	Quaternion FromUE(const FQuat& quat);
+
+	Vector4 FromUE(const FLinearColor& color);
 
 	template <typename T>
 	Vector3 UEToRHYUpPosition(const UE::Math::TVector<T>& vec)

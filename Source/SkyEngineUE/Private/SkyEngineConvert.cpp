@@ -28,4 +28,9 @@ namespace sky {
 		return Quaternion(quat.W, quat.X, quat.Y, quat.Z);
 	}
 
+	Vector4 FromUE(const FLinearColor& color)
+	{
+		return Vector4(color.R, color.G, color.B, color.A);
+	}
+
 } // namespace

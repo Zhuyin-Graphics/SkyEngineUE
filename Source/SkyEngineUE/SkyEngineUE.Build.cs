@@ -46,6 +46,7 @@ public class SkyEngineUE : ModuleRules
 				"SlateCore",
                 "Json",
                 "JsonUtilities",
+                "ImageWrapper",
                 "MaterialBaking"
             }
 			);

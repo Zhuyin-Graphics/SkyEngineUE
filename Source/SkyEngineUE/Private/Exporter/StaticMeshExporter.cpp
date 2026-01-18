@@ -19,7 +19,7 @@ namespace sky {
 		TArray<FStaticMaterial>& Materials = StaticMesh->GetStaticMaterials();
 		for (auto& Material : Materials)
 		{
-			auto* UMat = Material.MaterialInterface->GetMaterial();
+			auto &UMat = Material.MaterialInterface;
 			auto MatId = UMat->GetOutermost()->GetPersistentGuid();
 
 			MaterialExporter::Payload Payload = {};
