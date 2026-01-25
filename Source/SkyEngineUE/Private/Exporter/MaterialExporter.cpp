@@ -436,7 +436,7 @@ namespace sky {
 			auto Mat = AssetDataBase::Get()->RegisterAsset(engineMat, false);
 			mData.material = Mat->uuid;
 		}
-		else if (ShadingModel == MSM_Unlit)
+		else
 		{
 			AssetSourcePath engineMat = {};
 			engineMat.bundle = SourceAssetBundle::ENGINE;
