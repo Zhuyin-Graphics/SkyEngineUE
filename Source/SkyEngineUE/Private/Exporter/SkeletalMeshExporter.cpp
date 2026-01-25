@@ -10,12 +10,12 @@ namespace sky {
 
 	bool SkeletalMeshExport::Gather(USkeletalMesh* SkeletalMesh, SkyEngineExportContext& context, Payload& OutPayload)
 	{
-		if (context.Tasks.Find(SkeletalMesh->GetOutermost()->GetPersistentGuid()) != nullptr) {
+		if (context.Tasks.Find(FSoftObjectPath(SkeletalMesh).ToString()) != nullptr) {
 			return false;
 		}
 
 		auto Skeleton = SkeletalMesh->GetSkeleton();
-		auto SkeletonGuid = Skeleton->GetOutermost()->GetPersistentGuid();
+		auto SkeletonGuid = FSoftObjectPath(Skeleton).ToString();
 
 		if (context.Tasks.Find(SkeletonGuid) == nullptr) {
 			auto* Task = new SkeletonExport(SkeletonExport::Payload{ Skeleton });
@@ -32,7 +32,7 @@ namespace sky {
 		for (auto& Material : MaterialSlots)
 		{
 			auto* UMat = Material.MaterialInterface->GetMaterial();
-			auto MatId = UMat->GetOutermost()->GetPersistentGuid();
+			auto MatId = FSoftObjectPath(UMat).ToString();
 
 			MaterialExporter::Payload Payload = {};
 			Payload.Material = UMat;

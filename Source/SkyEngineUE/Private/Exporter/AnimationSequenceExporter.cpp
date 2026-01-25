@@ -24,12 +24,12 @@ namespace sky {
 
 	bool AnimationSequenceExport::Gather(UAnimSequence* Sequence, SkyEngineExportContext& context, sky::Uuid &outDep)
 	{
-		if (context.Tasks.Find(Sequence->GetOutermost()->GetPersistentGuid()) != nullptr) {
+		if (context.Tasks.Find(FSoftObjectPath(Sequence).ToString()) != nullptr) {
 			return false;
 		}
 
 		auto* Skeleton = Sequence->GetSkeleton();
-		auto SkeletonGuid = Skeleton->GetOutermost()->GetPersistentGuid();
+		auto SkeletonGuid = FSoftObjectPath(Skeleton).ToString();
 
 		if (context.Tasks.Find(SkeletonGuid) == nullptr) {
 			auto* Task = new SkeletonExport(SkeletonExport::Payload{ Skeleton });

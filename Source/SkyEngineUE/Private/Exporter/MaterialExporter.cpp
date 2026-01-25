@@ -569,7 +569,7 @@ namespace sky {
 
 	bool MaterialExporter::Gather(UMaterialInterface* Material, SkyEngineExportContext& Context, Payload& Payload)
 	{
-		if (Context.Tasks.Find(Material->GetOutermost()->GetPersistentGuid()) != nullptr) {
+		if (Context.Tasks.Find(FSoftObjectPath(Material).ToString()) != nullptr) {
 			return false;
 		}
 
@@ -586,7 +586,7 @@ namespace sky {
 		{
 			if (TryGetSourceTexture(BaseColorTexture, TexCoord, BaseColorProperty, Material) && BaseColorTexture != nullptr)
 			{
-				auto TexId = BaseColorTexture->GetOutermost()->GetPersistentGuid();
+				auto TexId = FSoftObjectPath(BaseColorTexture).ToString();
 				if (Context.Tasks.Find(TexId) == nullptr) {
 					auto* Task = new TextureExport(TextureExport::Payload{ BaseColorTexture });
 					Task->Init();
@@ -604,7 +604,7 @@ namespace sky {
 			const FMaterialPropertyEx NormalProperty = FMaterialPropertyEx(MP_Normal);
 			if (TryGetSourceTexture(NormalTexture, TexCoord, NormalProperty, Material) && NormalTexture != nullptr)
 			{
-				auto TexId = NormalTexture->GetOutermost()->GetPersistentGuid();
+				auto TexId = FSoftObjectPath(NormalTexture).ToString();
 				if (Context.Tasks.Find(TexId) == nullptr) {
 					auto* Task = new TextureExport(TextureExport::Payload{ NormalTexture });
 					Task->Init();

@@ -35,7 +35,7 @@ void FSkyEngineUEModule::OnProcessAssetsClicked(TArray<FAssetData> SelectedAsset
 				auto* Task = new sky::AnimationSequenceExport(Payload);
 				Task->Init();
 
-				context.Tasks.Emplace(anim->GetOutermost()->GetPersistentGuid(), Task);
+				context.Tasks.Emplace(FSoftObjectPath(anim).ToString(), Task);
 			}
 		}
 		else if (USkeletalMesh* SkeletalMesh = Cast<USkeletalMesh>(AssetData.GetAsset()))
@@ -46,7 +46,7 @@ void FSkyEngineUEModule::OnProcessAssetsClicked(TArray<FAssetData> SelectedAsset
 				auto* Task = new sky::SkeletalMeshExport(Payload);
 				Task->Init();
 
-				context.Tasks.Emplace(SkeletalMesh->GetOutermost()->GetPersistentGuid(), Task);
+				context.Tasks.Emplace(FSoftObjectPath(SkeletalMesh).ToString(), Task);
 			}
 
 		}
@@ -58,7 +58,7 @@ void FSkyEngineUEModule::OnProcessAssetsClicked(TArray<FAssetData> SelectedAsset
 				auto* Task = new sky::StaticMeshExport(Payload);
 				Task->Init();
 
-				context.Tasks.Emplace(StaticMesh->GetOutermost()->GetPersistentGuid(), Task);
+				context.Tasks.Emplace(FSoftObjectPath(StaticMesh).ToString(), Task);
 			}
 		}
 	}

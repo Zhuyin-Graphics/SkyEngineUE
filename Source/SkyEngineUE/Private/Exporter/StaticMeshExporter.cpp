@@ -11,7 +11,7 @@ namespace sky {
 
 	bool StaticMeshExport::Gather(UStaticMesh* StaticMesh, SkyEngineExportContext& Context, Payload& OutPayload)
 	{
-		if (Context.Tasks.Find(StaticMesh->GetOutermost()->GetPersistentGuid()) != nullptr) {
+		if (Context.Tasks.Find(FSoftObjectPath(StaticMesh).ToString()) != nullptr) {
 			return false;
 		}
 
@@ -20,7 +20,7 @@ namespace sky {
 		for (auto& Material : Materials)
 		{
 			auto &UMat = Material.MaterialInterface;
-			auto MatId = UMat->GetOutermost()->GetPersistentGuid();
+			auto MatId = FSoftObjectPath(UMat).ToString();
 
 			MaterialExporter::Payload Payload = {};
 			Payload.Material = UMat;
@@ -118,7 +118,7 @@ namespace sky {
 			// memcpy(RawIndexPtr, Resource.IndexBuffer.AccessStream32(), NumIndices * sizeof(uint32_t));
 		}
 
-#if ENGINE_MINOR_VERSION >= 5
+#if ENGINE_MINOR_VERSION > 5
 		auto Box = Resource.SourceMeshBounds.GetBox();
 #else
 		auto Box = RenderData->Bounds.GetBox();

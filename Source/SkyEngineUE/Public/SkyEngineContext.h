@@ -20,7 +20,7 @@ namespace sky {
 	};
 
 	struct SkyEngineExportContext {
-		TMap<FGuid, std::shared_ptr<ExporterBase>> Tasks;
+		TMap<FString, std::shared_ptr<ExporterBase>> Tasks;
 	};
 
 } // namespace sky

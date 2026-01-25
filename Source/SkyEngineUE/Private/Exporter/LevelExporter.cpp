@@ -39,11 +39,10 @@ namespace sky {
 					if (sky::StaticMeshExport::Gather(StaticMesh, Context, Payload)) {
 						auto* Task = new sky::StaticMeshExport(Payload);
 						Task->Init();
-						Context.Tasks.Emplace(StaticMesh->GetOutermost()->GetPersistentGuid(), Task);
+						Context.Tasks.Emplace(FSoftObjectPath(StaticMesh).ToString(), Task);
 					}
 
-					auto &Task = Context.Tasks.FindChecked(StaticMesh->GetOutermost()->GetPersistentGuid());
-
+					auto &Task = Context.Tasks.FindChecked(FSoftObjectPath(StaticMesh).ToString());
 					RenderPrefabNode Data = {};
 
 					Data.name = TCHAR_TO_UTF8(*MeshComponent->GetOwner()->GetName());
@@ -63,10 +62,12 @@ namespace sky {
 					PrefabData.nodes.emplace_back(Data);
 				}
 			}
-
-			UE_LOG(LogSkyEngineExporter, Log, TEXT("Exported Actor MeshComponents %d"), MeshComponents.Num());
 		}
 	}
+
+	struct ExportPacakge {
+		std::vector<std::shared_ptr<ExporterBase>> Tasks;
+	};
 
 	void LevelExport::ExportWorldPartition(const FSkyEngineExportConfig& Config, UWorld* World)
 	{
@@ -93,10 +94,16 @@ namespace sky {
 		Source->category = AssetTraits<RenderPrefab>::ASSET_TYPE;
 		Source->dependencies.swap(Deps);
 
-
-		for (const auto& [Guid, Task] : Context.Tasks) {
-			Task->Run();
+		auto SharedPackage = std::make_shared<ExportPacakge>();
+		for (auto& [name, task] : Context.Tasks)
+		{
+			SharedPackage->Tasks.emplace_back(task);
 		}
+
+		ParallelFor(Context.Tasks.Num(), [this, SharedPackage](int32 Index)
+			{
+				SharedPackage->Tasks[Index]->Run();
+			});
 	}
 
 	void LevelExport::Run(const FSkyEngineExportConfig& Config)
