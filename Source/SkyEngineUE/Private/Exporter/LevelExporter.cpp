@@ -46,7 +46,7 @@ namespace sky {
 
 					RenderPrefabNode Data = {};
 
-					Data.name = TCHAR_TO_UTF8(*MeshComponent->GetName());
+					Data.name = TCHAR_TO_UTF8(*MeshComponent->GetOwner()->GetName());
 					Data.mesh = Task->GetUuid();
 
 					auto iter = std::find(Deps.begin(), Deps.end(), Data.mesh);
@@ -79,7 +79,7 @@ namespace sky {
 
 		AssetSourcePath Path = {};
 		Path.bundle = SourceAssetBundle::WORKSPACE;
-		Path.path = FilePath("Prefabs") / FilePath(TCHAR_TO_UTF8(*World->GetName()));
+		Path.path = FilePath("Prefab") / FilePath(TCHAR_TO_UTF8(*World->GetName()));
 		Path.path.ReplaceExtension(".prefab");
 
 		{
