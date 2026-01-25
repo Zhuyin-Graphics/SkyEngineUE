@@ -101,6 +101,17 @@ namespace sky
 								.OnClicked(this, &FExportConfigWidget::OnExportFullClicked)
 						]
 					]
+					+ SVerticalBox::Slot()
+					.Padding(10)
+					[
+						SNew(SUniformGridPanel)
+						+ SUniformGridPanel::Slot(0, 0)
+						[
+							SNew(SButton)
+								.Text(LOCTEXT("Export UE World", "Delete Actors"))
+								.OnClicked(this, &FExportConfigWidget::OnDeleteCliecked)
+						]
+					]
 				]
 	        ]
 	    ];
@@ -116,6 +127,12 @@ namespace sky
 	FReply FExportConfigWidget::OnEvnInitClicked() // NOLINT
 	{
 		FSkyEngineUEModule::UpdateSkyEnv(ConfigValue);
+		return FReply::Handled();
+	}
+
+	FReply FExportConfigWidget::OnDeleteCliecked() // NOLINT
+	{
+		FSkyEngineUEModule::DeleteVolumeActors();
 		return FReply::Handled();
 	}
 

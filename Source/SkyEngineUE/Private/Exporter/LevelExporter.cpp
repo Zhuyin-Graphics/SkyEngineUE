@@ -100,10 +100,9 @@ namespace sky {
 			SharedPackage->Tasks.emplace_back(task);
 		}
 
-		ParallelFor(Context.Tasks.Num(), [this, SharedPackage](int32 Index)
-			{
-				SharedPackage->Tasks[Index]->Run();
-			});
+		for (auto& Task : SharedPackage->Tasks) {
+			Task->Run();
+		}
 	}
 
 	void LevelExport::Run(const FSkyEngineExportConfig& Config)

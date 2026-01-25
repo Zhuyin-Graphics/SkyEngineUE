@@ -21,6 +21,7 @@ public:
 	static void UpdateSkyEnv(const FSkyEngineExportConfig& config);
 	static void ExportWorld(const FSkyEngineExportConfig& config);
 	static void ExportHLOD();
+	static void DeleteVolumeActors();
 
 	static void Export(const sky::SkyEngineExportContext& context);
 

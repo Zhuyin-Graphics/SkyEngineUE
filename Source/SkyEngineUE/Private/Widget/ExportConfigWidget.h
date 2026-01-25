@@ -20,6 +20,7 @@ namespace sky
 		FReply OnCloseClicked();
 		FReply OnExportFullClicked();
 		FReply OnEvnInitClicked();
+		FReply OnDeleteCliecked();
 
 		void LoadConfig();
 		void SaveConfig() const;

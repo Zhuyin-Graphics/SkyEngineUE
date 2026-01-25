@@ -16,6 +16,12 @@
 #include "Exporter/StaticMeshExporter.h"
 #include "Exporter/AnimationSequenceExporter.h"
 
+#include "Editor/EditorEngine.h"
+#include "Selection.h"
+#include "LocationVolume.h"
+#include "Engine/OverlapResult.h"
+#include "Math/Box.h"
+
 #define LOCTEXT_NAMESPACE "FSkyEngineUEModule"
 
 std::unique_ptr<sky::SkyEngineContext> g_SkyEngine;
@@ -219,6 +225,43 @@ void FSkyEngineUEModule::ExportWorld(const FSkyEngineExportConfig& config)
 void FSkyEngineUEModule::ExportHLOD()
 {
 
+}
+
+void FSkyEngineUEModule::DeleteVolumeActors()
+{
+	auto World = GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+	if (World != nullptr)
+	{
+		USelection* SelectedObjects = GEditor->GetSelectedActors();
+
+
+		TArray<ALocationVolume*> Volumes;
+		for (FSelectionIterator It(*SelectedObjects); It; ++It)
+		{
+			if (ALocationVolume* Actor = Cast<ALocationVolume>(*It))
+			{
+				Volumes.Add(Actor);
+			}
+		}
+
+		for (auto* Volume : Volumes)
+		{
+			auto Location = Volume->GetActorLocation();
+			auto Extent = Volume->GetBounds().BoxExtent;
+
+			FCollisionShape CollisionShape;
+			CollisionShape.SetBox(FVector3f(Extent));
+
+			TArray<FOverlapResult> OverlapResults;
+			World->OverlapMultiByChannel(OverlapResults, Location, FQuat::Identity, ECC_Visibility, CollisionShape);
+
+			for (auto& Result : OverlapResults)
+			{
+				Result.GetActor()->Destroy();
+			}
+		}
+
+	}
 }
 
 void FSkyEngineUEModule::Export(const sky::SkyEngineExportContext& context)
