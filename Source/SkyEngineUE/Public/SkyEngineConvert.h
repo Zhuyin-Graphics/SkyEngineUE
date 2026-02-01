@@ -46,4 +46,22 @@ namespace sky{
 		return Quaternion(Result.W, Result.X, Result.Y, Result.Z);
 	}
 
+	template <typename T>
+	void Convert(uint8_t* ptr, uint32_t num, const T* src)
+	{
+		T* dst = reinterpret_cast<T*>(ptr);
+
+		for (uint32_t i = 0; i < num; i += 3)
+		{
+			const T& i0 = src[i + 0];
+			const T& i1 = src[i + 1];
+			const T& i2 = src[i + 2];
+
+
+			dst[i + 0] = i0;
+			dst[i + 1] = i2;
+			dst[i + 2] = i1;
+		}
+	}
+
 } // namespace sky

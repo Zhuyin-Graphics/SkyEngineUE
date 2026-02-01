@@ -51,24 +51,6 @@ namespace sky {
 		mPath.path.ReplaceExtension(".mesh");
 	}
 
-	template <typename T>
-	void Convert(uint8_t* ptr, uint32_t num, const T* src)
-	{
-		T* dst = reinterpret_cast<T*>(ptr);
-
-		for (uint32_t i = 0; i < num; i += 3)
-		{
-			const T& i0 = src[i + 0];
-			const T& i1 = src[i + 1];
-			const T& i2 = src[i + 2];
-
-
-			dst[i + 0] = i0;
-			dst[i + 1] = i2;
-			dst[i + 2] = i1;
-		}
-	}
-
 	void StaticMeshExport::Run()
 	{
 		auto& StaticMesh = mPayload.StaticMesh;
@@ -85,14 +67,14 @@ namespace sky {
 		// Vertices Num
 		uint32_t NumVertices = Resource.VertexBuffers.PositionVertexBuffer.GetNumVertices();
 		uint32_t NumTexCoord = Resource.VertexBuffers.StaticMeshVertexBuffer.GetNumTexCoords();
-		uint32_t NumIndices = Resource.IndexBuffer.GetNumIndices();
+		uint32_t NumIndices  = Resource.IndexBuffer.GetNumIndices();
 		rhi::IndexType IndexType = Resource.IndexBuffer.Is32Bit() ? rhi::IndexType::U32 : rhi::IndexType::U16;
 
 		CounterPtr<sky::StaticMeshGeometry> OutMesh = new sky::StaticMeshGeometry();
 		sky::StaticMeshGeometry::Config config = {};
 		config.UVNum = 1; // TODO
 
-		OutMesh->Init(NumVertices, NumIndices, IndexType, config);;
+		OutMesh->Init(NumVertices, NumIndices, IndexType, config);
 		for (uint32 j = 0; j < NumVertices; ++j)
 		{
 			const FVector3f& Position = Resource.VertexBuffers.PositionVertexBuffer.VertexPosition(j);

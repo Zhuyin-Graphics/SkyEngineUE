@@ -34,9 +34,14 @@ namespace sky {
 			SkyBone.parentIndex = static_cast<sky::BoneIndex>(ParentIndex);
 
 			auto& SkyPos = skeletonData.refPos[BoneIndex];
-			SkyPos.translation = FromUE(LocalTransform.GetLocation());
-			SkyPos.rotation = FromUE(LocalTransform.GetRotation());
-			SkyPos.scale = FromUE(LocalTransform.GetScale3D());
+
+			const auto& Translation = LocalTransform.GetLocation();
+			const auto& Rotation = LocalTransform.GetRotation();
+			const auto& Scale = LocalTransform.GetScale3D();
+
+			SkyPos.translation = Vector3(Translation.X, Translation.Z, Translation.Y);
+			SkyPos.rotation = Quaternion(Rotation.W, -Rotation.X, -Rotation.Z, -Rotation.Y);
+			SkyPos.scale = Vector3(Scale.X, Scale.Z, Scale.Y);
 		}
 
 		{
