@@ -13,19 +13,19 @@ namespace sky {
 		return Vector3(vec.X, vec.Y, vec.Z);
 	}
 
-	Vector4 FromUE(const FVector4f& vec)
-	{
-		return Vector4(vec.X, vec.Y, vec.Z, vec.W);
-	}
-
 	Vector3 FromUE(const UE::Math::TVector<double>& vec)
 	{
-		return Vector3(static_cast<float>(vec.X), static_cast<float>(vec.Y), static_cast<float>(vec.Z));
+		return Vector3(static_cast<float>(vec.X), static_cast<float>(vec.Z), static_cast<float>(vec.Y));
 	}
 
 	Quaternion FromUE(const FQuat& quat)
 	{
-		return Quaternion(quat.W, quat.X, quat.Y, quat.Z);
+		return Quaternion(quat.W, -quat.X, -quat.Z, -quat.Y);
+	}
+
+	Vector4 FromUE(const FVector4f& vec)
+	{
+		return Vector4(vec.X, vec.Y, vec.Z, vec.W);
 	}
 
 	Vector4 FromUE(const FLinearColor& color)

@@ -83,9 +83,9 @@ namespace sky {
 			FVector4f Normal = Resource.VertexBuffers.StaticMeshVertexBuffer.VertexTangentZ(j);
 			FVector4f Tangent = Resource.VertexBuffers.StaticMeshVertexBuffer.VertexTangentX(j);
 
-			OutMesh->SetPosition(j, FromUE(Position));
-			OutMesh->SetTangent(j, Vector3(Normal.X, Normal.Y, Normal.Z), FromUE(Tangent));
-			OutMesh->SetUv0(j, FromUE(UV0));
+			OutMesh->SetPosition(j, Vector3(Position.X, Position.Z, Position.Y));
+			OutMesh->SetTangent(j, Vector3(Normal.X, Normal.Z, Normal.Y), FromUE(Tangent));
+			OutMesh->SetUv0(j, Vector2(UV0.X, UV0.Y));
 		}
 
 		uint8_t* RawIndexPtr = OutMesh->GetIndexBuffer()->GetDataPointer();

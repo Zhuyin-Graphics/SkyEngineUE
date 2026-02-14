@@ -68,6 +68,23 @@ namespace sky {
 		mPath.path.ReplaceExtension(".mesh");
 	}
 
+	FTransform GetBindTransform(const FReferenceSkeleton& ReferenceSkeleton, int32 BoneIndex)
+	{
+		const TArray<FMeshBoneInfo>& BoneInfos = ReferenceSkeleton.GetRefBoneInfo();
+		const TArray<FTransform>& BonePoses = ReferenceSkeleton.GetRefBonePose();
+
+		FTransform BindTransform = BonePoses[BoneIndex];
+		int32 ParentBoneIndex = BoneInfos[BoneIndex].ParentIndex;
+
+		while (ParentBoneIndex != INDEX_NONE)
+		{
+			BindTransform *= BonePoses[ParentBoneIndex];
+			ParentBoneIndex = BoneInfos[ParentBoneIndex].ParentIndex;
+		}
+
+		return BindTransform;
+	}
+
 	void SkeletalMeshExport::Run()
 	{
 		auto& SkeletalMesh = mPayload.Mesh;
@@ -103,13 +120,20 @@ namespace sky {
 		{
 			VertexBoneData BoneData = {};
 
+			float totalWeight = 0.f;
 			for (int32 InfluenceIndex = 0; InfluenceIndex < BoneInfluenceCount && InfluenceIndex < 4; InfluenceIndex++)
 			{
 				auto Index = SkinWeightBuffer.GetBoneIndex(j, InfluenceIndex);
-				auto Weight = SkinWeightBuffer.GetBoneWeight(j, InfluenceIndex);
+				auto Weight = SkinWeightBuffer.GetBoneWeight(j, InfluenceIndex) / 65535.f;
 
 				BoneData.boneId[InfluenceIndex] = static_cast<uint8>(Index);
-				BoneData.weight[InfluenceIndex] = static_cast<uint8>(Weight);
+				totalWeight += Weight;
+			}
+
+			for (int32 InfluenceIndex = 0; InfluenceIndex < BoneInfluenceCount && InfluenceIndex < 4; InfluenceIndex++)
+			{
+				auto Weight = SkinWeightBuffer.GetBoneWeight(j, InfluenceIndex) / 65535.f / totalWeight;
+				BoneData.weight[InfluenceIndex] = Weight;
 			}
 
 			const FVector3f& Position = PositionBuffer.VertexPosition(j);
@@ -117,9 +141,9 @@ namespace sky {
 			FVector4f Normal = StaticVertexBuffer.VertexTangentZ(j);
 			FVector4f Tangent = StaticVertexBuffer.VertexTangentX(j);
 
-			OutMesh->SetPosition(j, FromUE(Position));
-			OutMesh->SetTangent(j, Vector3(Normal.X, Normal.Y, Normal.Z), FromUE(Tangent));
-			OutMesh->SetUv0(j, FromUE(UV0));
+			OutMesh->SetPosition(j, Vector3(Position.X, Position.Z, Position.Y));
+			OutMesh->SetTangent(j, Vector3(Normal.X, Normal.Z, Normal.Y), FromUE(Tangent));
+			OutMesh->SetUv0(j, Vector2(UV0.X, UV0.Y));
 			OutMesh->SetBoneIndexAndWeight(j, BoneData);
 		}
 
@@ -144,7 +168,6 @@ namespace sky {
 		for (int32 SectionIndex = 0; SectionIndex < Resource.RenderSections.Num(); SectionIndex++)
 		{
 			FSkelMeshRenderSection& Section = Resource.RenderSections[SectionIndex];
-
 			subMesh.firstVertex = 0;// Section.BaseVertexIndex;
 			subMesh.vertexCount = Section.NumVertices;
 			subMesh.firstIndex = Section.BaseIndex;
@@ -162,9 +185,31 @@ namespace sky {
 		staticMeshAsset.geometry = OutMesh;
 		staticMeshAsset.skeletalGeometry = OutMesh;
 		staticMeshAsset.materials.swap(UsedGuid);
-
 		sky::MeshAssetData meshData = staticMeshAsset.MakeMeshAssetData();
 		meshData.skeleton = mPayload.Skeleton;
+
+		// build skeleton bone mapping
+		auto Skeleton = mPayload.Mesh->GetSkeleton();;
+		auto RefSkeleton = mPayload.Mesh->GetRefSkeleton();
+
+		const TArray<FMeshBoneInfo>& BoneInfos = RefSkeleton.GetRefBoneInfo();
+		const TArray<FTransform>& BonePoses = RefSkeleton.GetRefBonePose();
+
+		meshData.subMappings.resize(Resource.RenderSections.Num());
+		for (int32 SectionIndex = 0; SectionIndex < Resource.RenderSections.Num(); SectionIndex++)
+		{
+			FSkelMeshRenderSection& Section = Resource.RenderSections[SectionIndex];
+			auto& BoneMapping = Section.BoneMap;
+
+			meshData.subMappings[SectionIndex].resize(BoneMapping.Num());
+			for (int32 Index = 0; Index < BoneMapping.Num(); ++Index) {
+				auto BoneIndex = BoneMapping[Index];
+				const FName& BoneName = BoneInfos[BoneIndex].Name;
+				int32 RealBoneIndex = Skeleton->GetReferenceSkeleton().FindBoneIndex(BoneName);
+				assert(RealBoneIndex != INDEX_NONE);
+				meshData.subMappings[SectionIndex][Index] = RealBoneIndex;
+			}
+		}
 
 		{
 			auto file = AssetDataBase::Get()->CreateOrOpenFile(mPath);

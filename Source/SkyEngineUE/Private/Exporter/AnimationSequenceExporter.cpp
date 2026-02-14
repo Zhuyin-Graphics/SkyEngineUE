@@ -30,7 +30,6 @@ namespace sky {
 
 		auto* Skeleton = Sequence->GetSkeleton();
 		auto SkeletonGuid = FSoftObjectPath(Skeleton).ToString();
-
 		if (context.Tasks.Find(SkeletonGuid) == nullptr) {
 			auto* Task = new SkeletonExport(SkeletonExport::Payload{ Skeleton });
 			Task->Init();
@@ -89,9 +88,13 @@ namespace sky {
 					Channel.scale.times[Frame] = Frame;
 					Channel.rotation.times[Frame] = Frame;
 
-					Channel.position.keys[Frame] = FromUE(Trans.GetLocation());
-					Channel.rotation.keys[Frame] = FromUE(Trans.GetRotation());
-					Channel.scale.keys[Frame] = FromUE(Trans.GetScale3D());
+					const auto& Translation = Trans.GetLocation();
+					const auto& Rotation = Trans.GetRotation();
+					const auto& Scale = Trans.GetScale3D();
+
+					Channel.position.keys[Frame] = Vector3(Translation.X, Translation.Z, Translation.Y);
+					Channel.rotation.keys[Frame] = Quaternion(Rotation.W, -Rotation.X, -Rotation.Z, -Rotation.Y);
+					Channel.scale.keys[Frame] = Vector3(Scale.X, Scale.Z, Scale.Y);
 				}
 			}
 
